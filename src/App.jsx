@@ -10,8 +10,6 @@ import {
   MapPin,
   ChevronRight,
   ChevronLeft,
-  Volume2,
-  VolumeX,
   Lightbulb,
   User,
   CheckCircle2,
@@ -107,39 +105,13 @@ export default function App() {
   const [isOpen, setIsOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [lampOn, setLampOn] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-  const audioCtxRef = useRef(null);
-
-  const playPageTurnSound = useCallback(() => {
-    if (!soundEnabled) return;
-    try {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      const ctx = audioCtxRef.current;
-      const bufferSize = ctx.sampleRate * 0.15;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const output = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i += 1) {
-        output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.3));
-      }
-      const whiteNoise = ctx.createBufferSource();
-      whiteNoise.buffer = buffer;
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.value = 800;
-      filter.Q.value = 1.0;
-      whiteNoise.connect(filter);
-      filter.connect(ctx.destination);
-      whiteNoise.start();
-    } catch (error) {
-      console.warn('Page-turn audio could not be played:', error);
-    }
-  }, [soundEnabled]);
+  const touchStartRef = useRef(null);
 
   useEffect(() => {
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return undefined;
+
     const handleMouseMove = (e) => {
       const { innerWidth, innerHeight } = window;
       const x = (e.clientX / innerWidth - 0.5) * 15;
@@ -151,29 +123,48 @@ export default function App() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  const handleTouchStart = (event) => {
+    if (event.target.closest('button, a, input, textarea, select')) {
+      touchStartRef.current = null;
+      return;
+    }
+
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (event) => {
+    if (!touchStartRef.current) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+
+    if (Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+    if (deltaX < 0) nextPage();
+    else prevPage();
+  };
+
   const openBook = () => {
-    playPageTurnSound();
     setIsOpen(true);
     setCurrentPage(1);
   };
 
   const nextPage = useCallback(() => {
     if (currentPage < 4) {
-      playPageTurnSound();
       setCurrentPage((prev) => prev + 1);
     }
-  }, [currentPage, playPageTurnSound]);
+  }, [currentPage]);
 
   const prevPage = useCallback(() => {
     if (currentPage > 1) {
-      playPageTurnSound();
       setCurrentPage((prev) => prev - 1);
     } else {
-      playPageTurnSound();
       setIsOpen(false);
       setCurrentPage(0);
     }
-  }, [currentPage, playPageTurnSound]);
+  }, [currentPage]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -192,7 +183,7 @@ export default function App() {
   }, [isOpen, currentPage, nextPage, prevPage]);
 
   return (
-    <div className={`relative min-h-screen w-full overflow-hidden transition-colors duration-700 select-none ${lampOn ? 'bg-[#0a0a0c]' : 'bg-[#030304]'}`}>
+    <div className={`relative min-h-screen w-full overflow-x-hidden transition-colors duration-700 ${lampOn ? 'bg-[#0a0a0c]' : 'bg-[#030304]'}`}>
       <div
         className="pointer-events-none absolute inset-0 transition-opacity duration-500"
         style={{
@@ -202,16 +193,16 @@ export default function App() {
         }}
       />
 
-      <header className="relative z-50 flex items-center justify-between px-6 py-4 border-b border-white/10 bg-black/25 backdrop-blur-xl">
-        <div className="flex items-center space-x-3">
-          <div className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.9)]" />
-          <span className="text-[10px] font-medium font-mono uppercase tracking-[0.32em] text-neutral-300">NGEVAO FORYOH • DIGITAL DESIGNER & DEVELOPER</span>
+      <header className="relative z-50 flex items-center justify-between gap-3 border-b border-white/10 bg-black/25 px-3 py-3 backdrop-blur-xl sm:px-6 sm:py-4">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.9)]" />
+          <span className="truncate text-[9px] font-medium font-mono uppercase tracking-[0.16em] text-neutral-300 sm:text-[10px] sm:tracking-[0.32em]">NGEVAO FORYOH • DIGITAL DESIGNER & DEVELOPER</span>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <a
             href={`mailto:${cvData.contact.email}?subject=Inquiry%20for%20Ngevao%20Foryoh%20-%20Portfolio`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-slate-950 shadow-[0_12px_30px_rgba(245,158,11,0.35)] transition-transform duration-200 hover:-translate-y-0.5"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-amber-300/40 bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-950 shadow-[0_12px_30px_rgba(245,158,11,0.35)] transition-transform duration-200 hover:-translate-y-0.5 sm:px-4 sm:tracking-[0.22em]"
           >
             <Send size={12} />
             <span>Hire Me</span>
@@ -219,20 +210,16 @@ export default function App() {
 
           <button
             onClick={() => setLampOn(!lampOn)}
-            className={`flex items-center space-x-2 rounded-full border px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.2em] transition-all ${
+            aria-label={lampOn ? 'Turn studio light off' : 'Turn studio light on'}
+            aria-pressed={lampOn}
+            className={`flex min-h-10 items-center gap-2 rounded-full border px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.2em] transition-all ${
               lampOn ? 'border-amber-400/40 bg-amber-500/10 text-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.12)]' : 'border-neutral-700 bg-neutral-900/60 text-neutral-400'
             }`}
           >
             <Lightbulb size={14} />
-            <span>{lampOn ? 'Studio lit' : 'Studio dark'}</span>
+            <span className="hidden sm:inline">{lampOn ? 'Studio lit' : 'Studio dark'}</span>
           </button>
 
-          <button
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className="rounded-full border border-white/10 bg-white/5 p-2 text-neutral-200 transition-colors hover:bg-white/10"
-          >
-            {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-          </button>
         </div>
       </header>
 
@@ -253,7 +240,7 @@ export default function App() {
             <div className="w-24 h-1 bg-amber-700/60 rounded-full rotate-12" />
           </div>
 
-          <div className={`relative transition-all duration-700 ${isOpen ? 'w-full max-w-5xl h-[680px]' : 'w-[420px] md:w-[520px] h-[560px] cursor-pointer group'}`}>
+          <div className={`relative transition-all duration-700 ${isOpen ? 'h-[min(680px,calc(100svh-130px))] min-h-[440px] w-full max-w-5xl' : 'group h-[min(560px,calc(100svh-130px))] min-h-[480px] w-[min(420px,calc(100vw-2rem))] cursor-pointer md:w-[520px]'}`}>
             {!isOpen && (
               <div
                 onClick={openBook}
@@ -293,11 +280,12 @@ export default function App() {
                   </span>
                 </div>
 
-                <div className="absolute inset-x-0 bottom-7 px-8 text-center">
+                <div className="absolute inset-x-0 bottom-6 px-5 text-center sm:bottom-7 sm:px-8">
                   <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.42em] text-amber-300/80">Creative Technologist</p>
                   <h1 className="m-0 text-center text-[2.7rem] font-black uppercase leading-[0.9] tracking-[-0.08em] text-transparent bg-gradient-to-b from-white via-stone-100 to-neutral-300 bg-clip-text max-[560px]:text-[2.05rem]">
                     {cvData.name}
                   </h1>
+                  <p className="mt-4 text-[10px] font-medium uppercase tracking-[0.2em] text-neutral-400">Tap or click to explore</p>
                 </div>
 
                 <div className="absolute -left-14 top-[34%] h-[2px] w-[120px] rotate-[18deg] bg-gradient-to-r from-transparent via-amber-300/60 to-amber-500/10" />
@@ -306,31 +294,36 @@ export default function App() {
             )}
 
             {isOpen && (
-              <div className="w-full h-full rounded-2xl bg-[#141417] border border-neutral-800 shadow-2xl flex flex-col md:flex-row overflow-hidden relative">
+              <div
+                className="relative flex h-full w-full touch-pan-y flex-col overflow-hidden rounded-2xl border border-neutral-800 bg-[#141417] shadow-2xl md:flex-row"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={() => { touchStartRef.current = null; }}
+              >
                 <div className="hidden md:block absolute top-0 bottom-0 left-1/2 -ml-px w-0.5 bg-gradient-to-b from-neutral-800 via-neutral-700 to-neutral-800 z-30 shadow-inner" />
 
                 {currentPage === 1 && (
-                  <div className="w-full h-full flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-neutral-800/80">
+                  <div className="flex h-full w-full flex-col divide-y divide-neutral-800/80 pb-16 md:flex-row md:divide-x md:divide-y-0">
                     <div className="w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-between">
                       <div className="space-y-4">
                         <span className="text-xs font-mono text-amber-400 tracking-widest uppercase">TABLE OF CONTENTS</span>
                         <h2 className="text-xl font-bold text-white">Jump to Section</h2>
                         <div className="space-y-2 pt-2">
-                          <button onClick={() => { playPageTurnSound(); setCurrentPage(2); }} className="w-full text-left p-2.5 rounded bg-neutral-900 hover:bg-neutral-800 text-xs text-neutral-200 flex justify-between items-center">
+                          <button onClick={() => setCurrentPage(2)} className="flex min-h-11 w-full items-center justify-between rounded bg-neutral-900 p-2.5 text-left text-xs text-neutral-200 hover:bg-neutral-800">
                             <span>01. Executive Profile & Education</span>
                             <ChevronRight size={14} className="text-amber-400" />
                           </button>
-                          <button onClick={() => { playPageTurnSound(); setCurrentPage(3); }} className="w-full text-left p-2.5 rounded bg-neutral-900 hover:bg-neutral-800 text-xs text-neutral-200 flex justify-between items-center">
+                          <button onClick={() => setCurrentPage(3)} className="flex min-h-11 w-full items-center justify-between rounded bg-neutral-900 p-2.5 text-left text-xs text-neutral-200 hover:bg-neutral-800">
                             <span>02. Technical Skills & Awards</span>
                             <ChevronRight size={14} className="text-amber-400" />
                           </button>
-                          <button onClick={() => { playPageTurnSound(); setCurrentPage(4); }} className="w-full text-left p-2.5 rounded bg-neutral-900 hover:bg-neutral-800 text-xs text-neutral-200 flex justify-between items-center">
+                          <button onClick={() => setCurrentPage(4)} className="flex min-h-11 w-full items-center justify-between rounded bg-neutral-900 p-2.5 text-left text-xs text-neutral-200 hover:bg-neutral-800">
                             <span>03. Experience & References</span>
                             <ChevronRight size={14} className="text-amber-400" />
                           </button>
                         </div>
                       </div>
-                      <p className="text-xs text-neutral-500">Use the arrow buttons or keyboard arrows to turn pages.</p>
+                      <p className="text-xs text-neutral-500">Swipe, use the page buttons, or press the arrow keys to turn pages.</p>
                     </div>
                     <div className="w-full md:w-1/2 p-6 md:p-8 flex flex-col justify-center items-center text-center">
                       <div className="mb-5 rounded-full border border-amber-500/20 bg-amber-500/10 p-4 text-amber-400">
@@ -347,7 +340,7 @@ export default function App() {
                 )}
 
                 {currentPage === 2 && (
-                  <div className="grid h-full w-full grid-cols-1 md:grid-cols-2">
+                  <div className="grid h-full w-full grid-rows-2 grid-cols-1 pb-16 md:grid-rows-1 md:grid-cols-2">
                     <section className="overflow-y-auto p-6 md:p-8">
                       <span className="text-xs font-mono tracking-widest text-amber-400">01 / PROFILE</span>
                       <h2 className="mt-3 text-xl font-bold text-white">About Me</h2>
@@ -380,7 +373,7 @@ export default function App() {
                 )}
 
                 {currentPage === 3 && (
-                  <div className="grid h-full w-full grid-cols-1 md:grid-cols-2">
+                  <div className="grid h-full w-full grid-rows-2 grid-cols-1 pb-16 md:grid-rows-1 md:grid-cols-2">
                     <section className="overflow-y-auto p-6 md:p-8">
                       <span className="text-xs font-mono tracking-widest text-amber-400">02 / TOOLKIT</span>
                       <h2 className="mt-3 flex items-center gap-2 text-xl font-bold text-white"><Code size={18} className="text-amber-400" />Technical Skills</h2>
@@ -423,7 +416,7 @@ export default function App() {
                 )}
 
                 {currentPage === 4 && (
-                  <div className="grid h-full w-full grid-cols-1 md:grid-cols-2">
+                  <div className="grid h-full w-full grid-rows-2 grid-cols-1 pb-16 md:grid-rows-1 md:grid-cols-2">
                     <section className="overflow-y-auto p-6 md:p-8">
                       <span className="text-xs font-mono tracking-widest text-amber-400">03 / EXPERIENCE</span>
                       <h2 className="mt-3 flex items-center gap-2 text-xl font-bold text-white"><Briefcase size={18} className="text-amber-400" />Experience & Projects</h2>
@@ -464,12 +457,12 @@ export default function App() {
                 )}
 
                 <div className="absolute inset-x-0 bottom-0 z-40 flex items-center justify-between border-t border-neutral-800 bg-[#141417]/95 px-4 py-3 md:px-6">
-                  <button onClick={prevPage} className="inline-flex items-center gap-1 rounded-full border border-neutral-700 px-3 py-1.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800" aria-label="Previous page">
+                  <button onClick={prevPage} className="inline-flex min-h-11 items-center gap-1 rounded-full border border-neutral-700 px-3 py-1.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800" aria-label="Previous page">
                     <ChevronLeft size={14} /> Previous
                   </button>
-                  <span className="text-[11px] font-mono text-neutral-500">PAGE {currentPage} / 4</span>
+                  <span aria-live="polite" className="text-[11px] font-mono text-neutral-500">PAGE {currentPage} / 4</span>
                   {currentPage < 4 ? (
-                    <button onClick={nextPage} className="inline-flex items-center gap-1 rounded-full border border-neutral-700 px-3 py-1.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800" aria-label="Next page">
+                    <button onClick={nextPage} className="inline-flex min-h-11 items-center gap-1 rounded-full border border-neutral-700 px-3 py-1.5 text-xs text-neutral-300 transition-colors hover:bg-neutral-800" aria-label="Next page">
                       Next <ChevronRight size={14} />
                     </button>
                   ) : (
