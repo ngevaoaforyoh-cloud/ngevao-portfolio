@@ -266,26 +266,28 @@ export default function App() {
                   2026 EDITION
                 </span>
 
-                <div className="absolute left-1/2 top-[123px] h-[274px] w-[274px] -translate-x-1/2 overflow-hidden rounded-full border-[7px] border-[#f7f3eb] bg-[#f2ece2]/10 shadow-[0_0_40px_rgba(255,255,255,0.08),0_0_80px_rgba(251,191,36,0.08)] ring-[12px] ring-white/[0.05] max-[560px]:top-[120px] max-[560px]:h-[min(68vw,240px)] max-[560px]:w-[min(68vw,240px)]">
-                  <img
-                    src={profilePortrait}
-                    alt="Ngevao Foryoh portrait"
-                    className="h-full w-full object-cover object-center scale-[1.04] saturate-[1.08] contrast-[1.05]"
-                  />
-                </div>
+                <div className="absolute inset-x-0 bottom-6 top-[112px] flex flex-col items-center max-[560px]:top-[100px]">
+                  <div className="h-[274px] w-[274px] shrink-0 overflow-hidden rounded-full border-[7px] border-[#f7f3eb] bg-[#f2ece2]/10 shadow-[0_0_40px_rgba(255,255,255,0.08),0_0_80px_rgba(251,191,36,0.08)] ring-[12px] ring-white/[0.05] max-[560px]:h-[min(58vw,210px)] max-[560px]:w-[min(58vw,210px)]">
+                    <img
+                      src={profilePortrait}
+                      alt="Ngevao Foryoh portrait"
+                      className="h-full w-full object-cover object-center scale-[1.04] saturate-[1.08] contrast-[1.05]"
+                    />
+                  </div>
 
-                <div className="absolute left-1/2 top-[398px] -translate-x-1/2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-4 py-2 shadow-[0_0_20px_rgba(16,185,129,0.15)] max-[560px]:top-[362px]">
-                  <span className="font-mono text-[10px] font-semibold tracking-[0.28em] text-emerald-300">
-                    GPA 4.49 / 5.00
-                  </span>
-                </div>
+                  <div className="mt-2 shrink-0 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-4 py-2 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+                    <span className="font-mono text-[10px] font-semibold tracking-[0.28em] text-emerald-300">
+                      GPA 4.49 / 5.00
+                    </span>
+                  </div>
 
-                <div className="absolute inset-x-0 bottom-6 px-5 text-center sm:bottom-7 sm:px-8">
-                  <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.42em] text-amber-300/80">Creative Technologist</p>
-                  <h1 className="m-0 text-center text-[2.7rem] font-black uppercase leading-[0.9] tracking-[-0.08em] text-transparent bg-gradient-to-b from-white via-stone-100 to-neutral-300 bg-clip-text max-[560px]:text-[2.05rem]">
-                    {cvData.name}
-                  </h1>
-                  <p className="mt-4 text-[10px] font-medium uppercase tracking-[0.2em] text-neutral-400">Tap or click to explore</p>
+                  <div className="mt-auto w-full px-5 text-center sm:px-8">
+                    <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.42em] text-amber-300/80">Creative Technologist</p>
+                    <h1 className="m-0 text-center text-[2.7rem] font-black uppercase leading-[0.9] tracking-[-0.08em] text-transparent bg-gradient-to-b from-white via-stone-100 to-neutral-300 bg-clip-text max-[560px]:text-[2.05rem]">
+                      {cvData.name}
+                    </h1>
+                    <p className="mt-4 text-[10px] font-medium uppercase tracking-[0.2em] text-neutral-400">Tap or click to explore</p>
+                  </div>
                 </div>
 
                 <div className="absolute -left-14 top-[34%] h-[2px] w-[120px] rotate-[18deg] bg-gradient-to-r from-transparent via-amber-300/60 to-amber-500/10" />
